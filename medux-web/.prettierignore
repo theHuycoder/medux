@@ -1,0 +1,11 @@
+# Add files here to ignore them from prettier formatting
+
+/dist
+/coverage
+*.api.md
+libs/*/CHANGELOG.md
+
+# Maven target
+target/
+/.nx/cache
+.angular

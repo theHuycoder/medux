@@ -1,0 +1,92 @@
+version: '3'
+
+services:
+  # Note: If you are assigning a custom name to your db service on the line below, make sure it does not contain underscores
+  supertokens-db:
+    image: 'postgres:latest'
+    environment:
+      POSTGRES_USER: supertokens_user 
+      POSTGRES_PASSWORD: somePassword 
+      POSTGRES_DB: supertokens
+    networks:
+      - app_network
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'supertokens_user', '-d', 'supertokens']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:9.0.2
+    depends_on:
+      supertokens-db:
+        condition: service_healthy
+    environment:
+      POSTGRESQL_CONNECTION_URI: "postgresql://supertokens_user:somePassword@supertokens-db:5432/supertokens"
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: >
+        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build: 
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    depends_on:
+      supertokens-db:
+        condition: service_healthy
+      supertokens:
+        condition: service_healthy
+    ports:
+       - "4000:4000"
+    networks:
+      - app_network
+    environment:
+      PORT: ":4000"
+      SUPERTOKEN_APP_NAME: "medux-api-gateway"
+      SUPERTOKEN_API_DOMAIN: "http://localhost:4000"
+      SUPERTOKEN_WEBSITE_DOMAIN: "http://localhost:4200"
+      SUPERTOKEN_CONNECTION_URI: "http://supertokens:3567"
+
+  auth:
+    build:
+      context: ./auth-gateway
+      dockerfile: Dockerfile
+    depends_on:
+      supertokens-db:
+        condition: service_healthy
+      supertokens:
+        condition: service_healthy
+    ports:
+      - "4300:4300"
+    networks:
+      - app_network
+    environment:
+      PORT: 4300
+      APP_NAME: "medux-auth"
+      API_DOMAIN: "http://localhost:4300"
+      WEB_DOMAIN: "http://localhost:4200"
+      SUPERTOKENS_CONNECTION_URI: "http://supertokens:3567"
+  # web:
+  #   build: 
+  #     context: ./medux-web
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "4200:4200"
+  #   networks:
+  #     - app_network
+  #   environment:
+  #     API_ROOT_URL: "http://api-gateway:4000"
+networks:
+  app_network:
+    driver: bridge
+volumes:
+  db_data:
