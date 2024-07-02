@@ -10,6 +10,7 @@ import (
 	"github.com/supertokens/supertokens-golang/recipe/session/sessmodels"
 	"github.com/supertokens/supertokens-golang/supertokens"
 	"theHuycoder.com/medux-api-gateway/pkg/config"
+	"theHuycoder.com/medux-api-gateway/pkg/user"
 )
 
 func initServer(config *config.Config) {
@@ -34,7 +35,14 @@ func initServer(config *config.Config) {
 
 	router.GET("/sessioninfo", verifySession(nil), sessioninfo)
 
-	router.Run(config.Port)
+	userHandler := user.NewUserHandler(config)
+
+	router.GET("/user-profile", verifySession(nil), userHandler.GetUserProfile)
+
+	err := router.Run(config.Port)
+	if err != nil {
+		return
+	}
 }
 
 // This is a function that wraps the supertokens verification function

@@ -2,7 +2,7 @@ require('ts-node').register();
 
 module.exports = [
   {
-    context: '*',
+    context: '/auth/*',
     target: `http://localhost:4300`,
     secure: false,
     changeOrigin: true,

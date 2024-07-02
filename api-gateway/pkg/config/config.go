@@ -9,6 +9,7 @@ type Config struct {
 	SupertokenApiDomain     string `mapstructure:"SUPERTOKEN_API_DOMAIN"`
 	SupertokenWebsiteDomain string `mapstructure:"SUPERTOKEN_WEBSITE_DOMAIN"`
 	SupertokenConnectionURI string `mapstructure:"SUPERTOKEN_CONNECTION_URI"`
+	UserServiceConn         string `mapstructure:"USER_SERVICE_CONN"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -20,6 +21,7 @@ func LoadConfig() (*Config, error) {
 	viper.BindEnv("SUPERTOKEN_API_DOMAIN")
 	viper.BindEnv("SUPERTOKEN_WEBSITE_DOMAIN")
 	viper.BindEnv("SUPERTOKEN_CONNECTION_URI")
+	viper.BindEnv("USER_SERVICE_CONN")
 
 	viper.SetDefault("PORT", ":4000")
 

@@ -21,6 +21,6 @@ export class SignInComponent {
       return;
     }
     const { email, password } = this.signInForm.value;
-    this.authService.postEmailPasswordSignIn(email as string, password as string);
+    this.authService.postEmailPasswordSignIn(email as string, password as string).subscribe(console.log);
   }
 }

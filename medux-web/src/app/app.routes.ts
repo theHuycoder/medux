@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
-import { AuthLayoutComponent } from '@libs/auth';
+import { canRedirectToDashboardGuard } from '@libs/auth/guards';
+
 
 export const routes: Routes = [
   {
@@ -8,22 +9,8 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    component: AuthLayoutComponent,
     path: 'auth',
-    children: [
-      {
-        path: '',
-        redirectTo: 'sign-in',
-        pathMatch: 'full',
-      },
-      {
-        path: 'sign-in',
-        loadComponent: () => import('@libs/auth').then((m) => m.SignInViewComponent),
-      },
-      {
-        path: 'sign-up',
-        loadComponent: () => import('@libs/auth').then((m) => m.SignUpViewComponent),
-      },
-    ],
+//    canActivate: [canRedirectToDashboardGuard],
+    loadChildren: () => import('./auth-manager/auth-manager.module').then(mod => mod.AuthManagerModule),
   },
 ];

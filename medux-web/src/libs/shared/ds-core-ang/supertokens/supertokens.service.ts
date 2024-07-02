@@ -52,4 +52,8 @@ export class SupertokensService {
   doesSessionExist() {
     return from(Session.doesSessionExist());
   }
+
+  getSessionInfo() {
+    return from(Session.doesSessionExist());
+  }
 }

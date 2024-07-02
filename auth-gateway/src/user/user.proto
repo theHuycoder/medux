@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package user;
+option go_package = "theHuycoder.com/medux-proto/go/pkg/user";
+
+service UserService {
+    rpc GetUser(GetUserProfileRequest) returns (GetUserProfileResponse) {}
+    rpc PostUser(PostUserProfileRequest) returns (GetUserProfileResponse) {}
+}
+
+message GetUserProfileRequest {
+    string user_id = 1;
+}
+
+message GetUserProfileResponse {
+    string user_id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string gender = 4;
+}
+
+message PostUserProfileRequest {
+    string user_id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string gender = 4 ;
+}

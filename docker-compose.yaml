@@ -1,23 +1,43 @@
-version: '3'
+version: "3"
 
 services:
   # Note: If you are assigning a custom name to your db service on the line below, make sure it does not contain underscores
   supertokens-db:
-    image: 'postgres:latest'
+    image: "postgres:latest"
     environment:
-      POSTGRES_USER: supertokens_user 
-      POSTGRES_PASSWORD: somePassword 
+      POSTGRES_USER: supertokens_user
+      POSTGRES_PASSWORD: somePassword
       POSTGRES_DB: supertokens
     networks:
       - app_network
     restart: unless-stopped
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - supertokens_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD', 'pg_isready', '-U', 'supertokens_user', '-d', 'supertokens']
+      test: ["CMD", "pg_isready", "-U", "supertokens_user", "-d", "supertokens"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  user-db:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_USER: user_service_db
+      POSTGRES_PASSWORD: somePassword
+      POSTGRES_DB: users
+
+    networks:
+      - app_network
+    restart: unless-stopped
+    volumes:
+      - users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "supertokens_user", "-d", "supertokens"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5433:5432"
 
   supertokens:
     image: registry.supertokens.io/supertokens/supertokens-postgresql:9.0.2
@@ -36,8 +56,26 @@ services:
       timeout: 5s
       retries: 5
 
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    depends_on:
+      user-db:
+        condition: service_healthy
+    networks:
+      - app_network
+    environment:
+      PORT: ":4400"
+      DB_CONNECTION_STRING: "postgresql://user_service_db:somePassword@user-db:5432/users"
+    healthcheck:
+      test: ["CMD", "/bin/grpc_health_probe", "-addr=:4400"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api-gateway:
-    build: 
+    build:
       context: ./api-gateway
       dockerfile: Dockerfile
     depends_on:
@@ -46,7 +84,7 @@ services:
       supertokens:
         condition: service_healthy
     ports:
-       - "4000:4000"
+      - "4000:4000"
     networks:
       - app_network
     environment:
@@ -65,6 +103,8 @@ services:
         condition: service_healthy
       supertokens:
         condition: service_healthy
+      user-service:
+        condition: service_healthy
     ports:
       - "4300:4300"
     networks:
@@ -75,8 +115,9 @@ services:
       API_DOMAIN: "http://localhost:4300"
       WEB_DOMAIN: "http://localhost:4200"
       SUPERTOKENS_CONNECTION_URI: "http://supertokens:3567"
+      USER_SERVICE_CONNECTION_URI: "0.0.0.0:4400"
   # web:
-  #   build: 
+  #   build:
   #     context: ./medux-web
   #     dockerfile: Dockerfile
   #   ports:
@@ -89,4 +130,5 @@ networks:
   app_network:
     driver: bridge
 volumes:
-  db_data:
+  supertokens_data:
+  users_data:
